@@ -24,7 +24,7 @@ class Timespan(IntEnum):
     month = 2
 
 class GrowattApi:
-    server_url = 'https://server-api.growatt.com/'
+    server_url = 'https://server.growatt.com/'
     agent_identifier = "Dalvik/2.1.0 (Linux; U; Android 12; https://github.com/indykoning/PyPi_GrowattServer)"
 
     def __init__(self, add_random_user_id=False, agent_identifier=None):
@@ -65,7 +65,7 @@ class GrowattApi:
         """
         return self.server_url + page
 
-    def login(self, username, password, is_password_hashed=False):
+    def login(self, username, password, is_password_hashed=False, login_type="app"):
         """
         Log the user in.
 
@@ -125,6 +125,14 @@ class GrowattApi:
             'isBigCustomer'
             'noticeType'
         """
+        if login_type == "web":
+            response = self.session.post(self.get_url('login'), data={
+                'account': username,
+                'password': password
+            })
+            data = json.loads(response.content.decode('utf-8'))
+            return data
+
         if not is_password_hashed:
             password = hash_password(password)
 
@@ -669,3 +677,30 @@ class GrowattApi:
         }
         return self.update_inverter_setting(serial_number, setting_type, 
                                             default_parameters, parameters)
+
+    def get_storage_energy_day_chart(self, serial_number, plant_id,
+                                      timespan=Timespan.hour, date=None):
+        """
+        Retrieve solar production and consuption data. Requires web login.
+
+        Arguments:
+        serial_number -- Serial number (device_sn) of the inverter (str)
+        plant_id -- The id of the plant you wish to update the settings for (str)
+
+        Keyword arguments:
+        timespan -- The ENUM value conforming to the time window you want e.g. hours from today, days, or months (Default Timespan.hour)
+        date -- The date you are interested in (Default datetime.datetime.now()).
+
+        Returns:
+        Chart data JSON object. See dashboard_data for details.
+
+        """
+        date_str = self.__get_date_string(timespan, date)
+        response = self.session.post(self.get_url('panel/storage/getStorageEnergyDayChart'),
+                                     params={
+                                         'date': date_str,
+                                         'plantId': plant_id,
+                                         'storageSn': serial_number,
+                                         })
+        data = json.loads(response.content.decode('utf-8'))
+        return data
