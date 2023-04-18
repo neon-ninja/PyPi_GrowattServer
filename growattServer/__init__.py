@@ -685,7 +685,7 @@ class GrowattApi:
 
         Arguments:
         serial_number -- Serial number (device_sn) of the inverter (str)
-        plant_id -- The id of the plant you wish to update the settings for (str)
+        plant_id -- The id of the plant (str)
 
         Keyword arguments:
         timespan -- The ENUM value conforming to the time window you want e.g. hours from today, days, or months (Default Timespan.hour)
@@ -701,6 +701,32 @@ class GrowattApi:
                                          'date': date_str,
                                          'plantId': plant_id,
                                          'storageSn': serial_number,
+                                         })
+        data = json.loads(response.content.decode('utf-8'))
+        return data
+
+    def get_capacity_day_chart(self, serial_number, plant_id,
+                                      timespan=Timespan.hour, date=None):
+        """
+        Retrieve daily chart data. Requires web login.
+
+        Arguments:
+        plant_id -- The id of the plant (str)
+
+        Keyword arguments:
+        timespan -- The ENUM value conforming to the time window you want e.g. hours from today, days, or months (Default Timespan.hour)
+        date -- The date you are interested in (Default datetime.datetime.now()).
+
+        Returns:
+        Chart data JSON object. See dashboard_data for details.
+
+        """
+        date_str = self.__get_date_string(timespan, date)
+        response = self.session.post(self.get_url('energy/compare/getDevicesDayChart'),
+                                     params={
+                                         'date': date_str,
+                                         'plantId': plant_id,
+                                         'jsonData': json.dumps([{"type":"storage","sn":serial_number,"params":"capacity"}]),
                                          })
         data = json.loads(response.content.decode('utf-8'))
         return data
