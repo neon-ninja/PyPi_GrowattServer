@@ -25,7 +25,7 @@ class Timespan(IntEnum):
 
 class GrowattApi:
     server_url = 'https://server.growatt.com/'
-    agent_identifier = "Dalvik/2.1.0 (Linux; U; Android 12; https://github.com/indykoning/PyPi_GrowattServer)"
+    agent_identifier = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/116.0.0.0 Safari/537.36 Edg/116.0.1938.81"
 
     def __init__(self, add_random_user_id=False, agent_identifier=None):
         if (agent_identifier != None):
@@ -125,16 +125,17 @@ class GrowattApi:
             'isBigCustomer'
             'noticeType'
         """
+        if not is_password_hashed:
+            password = hash_password(password)
+
         if login_type == "web":
             response = self.session.post(self.get_url('login'), data={
                 'account': username,
-                'password': password
+                'passwordCrc': password
             })
             data = json.loads(response.content.decode('utf-8'))
             return data
 
-        if not is_password_hashed:
-            password = hash_password(password)
 
         response = self.session.post(self.get_url('newTwoLoginAPI.do'), data={
             'userName': username,
